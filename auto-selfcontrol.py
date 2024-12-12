@@ -164,7 +164,7 @@ def check_if_running(api, config):
     if api is Api.V2:
         username = config["username"]
         defaults = get_selfcontrol_settings(username)
-        return defaults.has_key("BlockStartedDate") and not NSDate.distantFuture().isEqualToDate_(defaults["BlockStartedDate"])
+        return "BlockStartedDate" in defaults and not NSDate.distantFuture().isEqualToDate_(defaults["BlockStartedDate"])
     elif api is Api.V3:
         output = execSelfControl(config, ["--is-running"])
         m = re.search(
@@ -340,15 +340,15 @@ def install(config, settings_dir):
 
 def check_config(config):
     """ checks whether the config file is correct """
-    if not config.has_key("username"):
+    if "username" not in config:
         exit_with_error("No username specified in config.")
-    if config["username"] not in get_osx_usernames():
+    if config["username"] not in os.getlogin():
         exit_with_error(
             "Username '{username}' unknown.\nPlease use your OSX username instead.\n"
             "If you have trouble finding it, just enter the command 'whoami'\n"
             "in your terminal.".format(
                 username=config["username"]))
-    if not config.has_key("selfcontrol-path"):
+    if "selfcontrol-path" not in config:
         exit_with_error(
             "The setting 'selfcontrol-path' is required and must point to the location of SelfControl.")
     if not os.path.exists(config["selfcontrol-path"]):
@@ -356,7 +356,7 @@ def check_config(config):
             "The setting 'selfcontrol-path' does not point to the correct location of SelfControl. "
             "Please make sure to use an absolute path and include the '.app' extension, "
             "e.g. /Applications/SelfControl.app")
-    if not config.has_key("block-schedules"):
+    if "block-schedules" not in config:
         exit_with_error("The setting 'block-schedules' is required.")
     if len(config["block-schedules"]) == 0:
         exit_with_error("You need at least one schedule in 'block-schedules'.")
@@ -376,11 +376,6 @@ def update_blocklist(blocklist_path, config, schedule):
     }
     with open(blocklist_path, 'wb') as fp:
         plistlib.writePlist(plist, fp)
-
-
-def get_osx_usernames():
-    output = subprocess.check_output(["dscl", ".", "list", "/users"])
-    return [s.strip() for s in output.splitlines()]
 
 
 def excepthook(excType, excValue, tb):
